@@ -58,6 +58,6 @@ Features visible in the screenshot:
 
 <div  align="center">
 
-<sub>Check out more tools and updates at <a  href="https://non-erx.dev">non-erx.dev</a></sub>
+<sub>Check out my silly web-page -> <a  href="https://non-erx.dev">non-erx.dev</a></sub>
 
 </div>
