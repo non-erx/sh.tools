@@ -12,7 +12,7 @@ restart_script() {
 }
 
 clear
-echo -e "${GREEN}docker managin tool. non-erx.dev. much love!${NC}"
+echo -e "${GREEN}Docker managing tool. Made with love! @non-erx.dev${NC}"
 echo -e "\----------------------------\\"
 
 echo -e "${BLUE}IMAGES YOU HAVE:${NC}"
