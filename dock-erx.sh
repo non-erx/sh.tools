@@ -11,7 +11,6 @@ restart_script() {
     exec "$0"
 }
 
-
 clear
 echo -e "${GREEN}docker managin tool. non-erx.dev. much love!${NC}"
 echo -e "\----------------------------\\"
@@ -38,34 +37,34 @@ while true; do
     echo "7. Shell 2 the container"
     echo "8. Exit"
     
-    read -p "Enter your choice (1-8): " choice
+    read -r -p "Enter your choice (1-8): " choice </dev/tty
 
     case $choice in
         1)
-            read -p "What image you want to pull? " image_name
+            read -r -p "What image you want to pull? " image_name </dev/tty
             echo -e "${ORANGE}docker pull ${image_name}${NC}"
             docker pull $image_name
             restart_script
             ;;
         2)
-            read -p "What the name of the container? " container_name
-            read -p "What the name of the image? " image_name
-            read -p "What port do you want to use? " port
+            read -r -p "What the name of the container? " container_name </dev/tty
+            read -r -p "What the name of the image? " image_name </dev/tty
+            read -r -p "What port do you want to use? " port </dev/tty
             echo -e "${ORANGE}docker run -d -it -p ${port}:${port} --name ${container_name} ${image_name}${NC}"
             docker run -d -it -p $port:$port --name $container_name $image_name
             restart_script
             ;;
         3)
             docker network ls
-            read -p "Name for a new network: " network_name
+            read -r -p "Name for a new network: " network_name </dev/tty
             echo -e "${ORANGE}docker network create ${network_name}${NC}"
             docker network create $network_name
             
-            read -p "Do you want to add containers to it? (Y/N) " add_containers
+            read -r -p "Do you want to add containers to it? (Y/N) " add_containers </dev/tty
             
             if [[ $add_containers == "Y" || $add_containers == "y" ]]; then
                 docker ps --all
-                read -p "What containers do you want to add? (space-separated for multiple): " containers
+                read -r -p "What containers do you want to add? (space-separated for multiple): " containers </dev/tty
                 
                 for container in $containers; do
                     echo -e "${ORANGE}docker network connect ${network_name} ${container}${NC}"
@@ -76,13 +75,13 @@ while true; do
             ;;
         4)
             docker images
-            read -p "What image you want to remove? " image_name
+            read -r -p "What image you want to remove? " image_name </dev/tty
             echo -e "${ORANGE}docker rmi ${image_name}${NC}"
             docker rmi $image_name
             restart_script
             ;;
         5)
-            read -p "What container you want to remove? " container_name
+            read -r -p "What container you want to remove? " container_name </dev/tty
             echo -e "${ORANGE}docker stop ${container_name}${NC}"
             docker stop $container_name
             echo -e "${ORANGE}docker rm ${container_name}${NC}"
@@ -90,14 +89,14 @@ while true; do
             restart_script
             ;;
         6)
-            read -p "Do you want remove all unused networks? (Y/N) " remove_all
+            read -r -p "Do you want remove all unused networks? (Y/N) " remove_all </dev/tty
             
             if [[ $remove_all == "Y" || $remove_all == "y" ]]; then
                 echo -e "${ORANGE}docker network prune${NC}"
                 docker network prune
             else
                 docker network ls
-                read -p "What network do u wanna remove? " network_name
+                read -r -p "What network do u wanna remove? " network_name </dev/tty
                 echo -e "${ORANGE}docker network rm ${network_name}${NC}"
                 docker network rm $network_name
             fi
@@ -105,7 +104,7 @@ while true; do
             ;;
         7)
             docker ps --all
-            read -p "What container do you wanna login 2? " container_name
+            read -r -p "What container do you wanna login 2? " container_name </dev/tty
             echo -e "${ORANGE}docker container start ${container_name}${NC}"
             docker container start $container_name
             clear
