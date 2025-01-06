@@ -40,13 +40,6 @@ A streamlined Docker management tool that provides quick access to essential Doc
 - Network management (create, connect containers, remove)
 - Container operations (create, remove, shell access)
 - User-friendly interface with color-coded output
-- Real-time status updates and command previews
-
-Features visible in the screenshot:
-- Image management with detailed information (Repository, Tag, ID, Creation date, Size)
-- Container overview with command history, status, ports, and names
-- Network configuration with driver and scope information
-- Interactive menu for all Docker operations
 
   
 
