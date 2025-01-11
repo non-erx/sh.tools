@@ -64,8 +64,6 @@ check_root() {
     fi
 }
 
-
-
 # Check and install Docker first
 install_docker() {
     success "Installing Docker..."
