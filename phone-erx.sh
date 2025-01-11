@@ -27,7 +27,7 @@ show_welcome() {
 
 # Check if script is run as root
 if [ "$EUID" -ne 0 ]; then 
-    echo
+    echo ""
     echo "This script requires root privileges for the following operations:"
     echo "- Installing system packages and dependencies"
     echo "- Creating new user accounts"
