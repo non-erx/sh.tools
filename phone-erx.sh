@@ -1,44 +1,24 @@
-#!/bin/bash
+# /bin/bash
 
-# Enable strict error handling
+# Script settings
 set -Eeuo pipefail
 trap cleanup SIGINT SIGTERM ERR EXIT
 
 # Script variables
-readonly SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
-readonly PHONERX_USER="phonerx"
-readonly PHONERX_PASS="phonerx"
-readonly DOCKER_NETWORK="ptools-erx"
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
+PHONERX_USER="phonerx"
+PHONERX_PASS="phonerx"
+DOCKER_NETWORK="ptools-erx"
 
-# Color codes for output
-readonly RED='\033[0;31m'
-readonly GREEN='\033[0;32m'
-readonly BLUE='\033[0;34m'
-readonly NC='\033[0m' # No Color
+# Color definitions (no readonly)
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
 
-# Error handling
-msg() {
-    echo >&2 -e "${1-}"
-}
-
-die() {
-    local msg=$1
-    local code=${2-1}
-    msg "${RED}[✗] ${msg}${NC}"
-    exit "$code"
-}
-
-setup_colors() {
-    if [[ -t 2 ]] && [[ -z "${NO_COLOR-}" ]] && [[ "${TERM-}" != "dumb" ]]; then
-        NOFORMAT='\033[0m' RED='\033[0;31m' GREEN='\033[0;32m' BLUE='\033[0;34m'
-    else
-        NOFORMAT='' RED='' GREEN='' BLUE=''
-    fi
-}
-
-# ASCII Art Welcome Banner
-show_welcome() {
-    echo '
+# Show ASCII banner
+show_banner() {
+    cat << "EOF"
     ██████╗ ██╗  ██╗ ██████╗ ███╗   ██╗███████╗   ███████╗██████╗ ██╗  ██╗
     ██╔══██╗██║  ██║██╔═══██╗████╗  ██║██╔════╝   ██╔════╝██╔══██╗╚██╗██╔╝
     ██████╔╝███████║██║   ██║██╔██╗ ██║█████╗     █████╗  ██████╔╝ ╚███╔╝ 
@@ -46,12 +26,18 @@ show_welcome() {
     ██║     ██║  ██║╚██████╔╝██║ ╚████║███████╗   ███████╗██║  ██║██╔╝ ██╗
     ╚═╝     ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝   ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝
                                                                 by @non-erx
-    '
-    echo -e "${BLUE}Pentest Toolset Installation Script${NC}"
+EOF
+    echo -e "\n${BLUE}Pentest Toolset Installation Script${NC}"
     echo "-----------------------------------"
 }
 
-# Check if script is run as root
+# Message functions
+msg() { echo -e "${1-}"; }
+info() { msg "${BLUE}[i] ${1}${NC}"; }
+success() { msg "${GREEN}[+] ${1}${NC}"; }
+error() { msg "${RED}[✗] ${1}${NC}"; exit 1; }
+
+# Check root privileges
 check_root() {
     if [ "$EUID" -ne 0 ]; then 
         echo -e "\nThis script requires root privileges for:"
@@ -60,7 +46,6 @@ check_root() {
         echo "- Configuring Docker and network settings"
         echo "- Setting up firewall rules"
         echo "- Managing system services"
-        echo "- Modifying system configurations"
         
         echo -n "Would you like to run this script with sudo? (Y/N): "
         read -r response
@@ -69,23 +54,33 @@ check_root() {
                 exec sudo bash "$0" "$@"
                 ;;
             * )
-                die "Root privileges required. Exiting..."
+                error "Root privileges required. Exiting..."
                 ;;
         esac
     fi
 }
 
-# Create phonerx user with sudo privileges
-create_user() {
-    msg "${GREEN}[+] Creating ${PHONERX_USER} user...${NC}"
-    if id "$PHONERX_USER" &>/dev/null; then
-        msg "${BLUE}[i] User ${PHONERX_USER} already exists${NC}"
-    else
-        useradd -m -s /bin/bash "$PHONERX_USER"
-        echo "${PHONERX_USER}:${PHONERX_PASS}" | chpasswd
-        usermod -aG sudo "$PHONERX_USER"
-        usermod -aG docker "$PHONERX_USER"
+# Check and install Docker first
+install_docker() {
+    success "Installing Docker..."
+    local os=$1
+    
+    if ! command -v docker &>/dev/null; then
+        if [ "$os" == "arch" ]; then
+            pacman -S --noconfirm docker docker-compose
+        elif [ "$os" == "ubuntu" ]; then
+            apt update
+            apt install -y apt-transport-https ca-certificates curl gnupg lsb-release
+            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+            echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+            apt update
+            apt install -y docker-ce docker-ce-cli containerd.io docker-compose
+        fi
     fi
+    
+    systemctl enable docker
+    systemctl start docker
+    docker network create "$DOCKER_NETWORK" 2>/dev/null || true
 }
 
 # Detect OS
@@ -95,65 +90,54 @@ detect_os() {
     elif [ -f /etc/lsb-release ]; then
         echo "ubuntu"
     else
-        die "Unsupported operating system"
+        error "Unsupported operating system"
     fi
 }
 
 # Install prerequisites
 install_prerequisites() {
     local os=$1
-    msg "${GREEN}[+] Installing prerequisites...${NC}"
+    success "Installing prerequisites..."
     if [ "$os" == "ubuntu" ]; then
         apt update
-        apt install -y curl wget git python3-pip software-properties-common apt-transport-https snapd
+        apt install -y curl wget git python3-pip software-properties-common snapd ufw
     elif [ "$os" == "arch" ]; then
         pacman -Syu --noconfirm
-        pacman -S --noconfirm curl wget git python-pip snapd
+        pacman -S --noconfirm curl wget git python-pip snapd ufw
     fi
 }
 
-# Update system based on OS
-update_system() {
-    local os=$1
-    msg "${GREEN}[+] Updating system...${NC}"
-    if [ "$os" == "arch" ]; then
-        pacman -Syu --noconfirm
-        systemctl enable --now snapd.socket
-        systemctl start snapd.service
-        ln -sf /var/lib/snapd/snap /snap
-    elif [ "$os" == "ubuntu" ]; then
-        apt update && apt upgrade -y
-        systemctl enable --now snapd.socket
-        systemctl start snapd.service
+# Create user
+create_user() {
+    success "Creating user ${PHONERX_USER}..."
+    if ! id "$PHONERX_USER" &>/dev/null; then
+        useradd -m -s /bin/bash "$PHONERX_USER"
+        echo "${PHONERX_USER}:${PHONERX_PASS}" | chpasswd
+        usermod -aG sudo "$PHONERX_USER"
+        usermod -aG docker "$PHONERX_USER"
     fi
-    
-    msg "${BLUE}[i] Waiting for snap service to initialize...${NC}"
-    sleep 10
-    snap wait system seed.loaded
 }
 
-# Install system applications
-install_system_apps() {
+# Configure system applications
+setup_system_apps() {
     local os=$1
-    msg "${GREEN}[+] Installing system applications...${NC}"
+    success "Setting up system applications..."
     
     if [ "$os" == "arch" ]; then
-        # Install yay
         if ! command -v yay &>/dev/null; then
             git clone https://aur.archlinux.org/yay.git
-            cd yay || die "Failed to enter yay directory"
+            cd yay || error "Failed to enter yay directory"
             makepkg -si --noconfirm
             cd .. && rm -rf yay
         fi
         
-        # Install packages
         pacman -S --noconfirm code gcc android-studio
         yay -S --noconfirm tabby-bin zen-browser
         
     elif [ "$os" == "ubuntu" ]; then
         # VSCode
         wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /usr/share/keyrings/microsoft-archive-keyring.gpg
-        echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft-archive-keyring.gpg] https://packages.microsoft.com/repos/vscode stable main" | tee /etc/apt/sources.list.d/vscode.list
+        echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft-archive-keyring.gpg] https://packages.microsoft.com/repos/vscode stable main" | tee /etc/apt/sources.list.d/vscode.list > /dev/null
         apt update && apt install -y code g++
         
         # Android Studio
@@ -172,7 +156,7 @@ install_system_apps() {
 
 # Configure Android Studio
 configure_android_studio() {
-    msg "${GREEN}[+] Configuring Android Studio...${NC}"
+    success "Configuring Android Studio..."
     local config_dir="/home/${PHONERX_USER}/.AndroidStudio"
     mkdir -p "$config_dir"
     cat > "${config_dir}/docker.properties" << EOF
@@ -182,10 +166,9 @@ EOF
     chown -R "${PHONERX_USER}:${PHONERX_USER}" "$config_dir"
 }
 
-# Install and configure firewall
+# Setup firewall
 setup_firewall() {
-    msg "${GREEN}[+] Setting up UFW firewall...${NC}"
-    apt install -y ufw
+    success "Setting up firewall..."
     ufw default deny incoming
     ufw default allow outgoing
     ufw allow ssh
@@ -201,36 +184,16 @@ setup_firewall() {
     echo "y" | ufw enable
 }
 
-# Install Docker
-install_docker() {
-    local os=$1
-    msg "${GREEN}[+] Installing Docker...${NC}"
-    if [ "$os" == "arch" ]; then
-        pacman -S --noconfirm docker docker-compose
-    elif [ "$os" == "ubuntu" ]; then
-        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-        echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
-        apt update
-        apt install -y docker-ce docker-ce-cli containerd.io docker-compose
-    fi
+# Setup base containers
+setup_base_containers() {
+    success "Setting up base containers..."
     
-    systemctl enable docker
-    systemctl start docker
-    
-    # Create pentest network
-    docker network create "$DOCKER_NETWORK" || true
-}
-
-# Setup Docker containers
-setup_docker_containers() {
-    msg "${GREEN}[+] Setting up Docker containers...${NC}"
-    
-    # Create shared volume
+    # Create volumes
     docker volume create pentest_data
+    docker volume create portainer_data
+    docker volume create msf_data
+    docker volume create caido_data
 
-    # Array of container configurations
-    declare -A containers
-    
     # Portainer
     docker run -d \
         --name portainer \
@@ -241,114 +204,30 @@ setup_docker_containers() {
         -v portainer_data:/data \
         portainer/portainer-ce
 
-    # SQLMap
-    docker run -d \
-        --name sqlmap \
-        --network "$DOCKER_NETWORK" \
-        -v pentest_data:/root/.sqlmap \
-        ahacking/sqlmap
-    
-    # Nmap
-    docker run -d \
-        --name nmap \
-        --network "$DOCKER_NETWORK" \
-        --cap-add=NET_ADMIN \
-        --cap-add=NET_RAW \
-        instrumentisto/nmap
-    
-    # Caido
-    docker run -d \
-        --name caido \
-        --network "$DOCKER_NETWORK" \
-        -p 8080:8080 \
-        -v caido_data:/root/.config/caido \
-        caido/caido
+    # Common pentesting tools
+    declare -A containers=(
+        ["sqlmap"]="ahacking/sqlmap:-d --name sqlmap --network $DOCKER_NETWORK -v pentest_data:/root/.sqlmap"
+        ["nmap"]="instrumentisto/nmap:-d --name nmap --network $DOCKER_NETWORK --cap-add=NET_ADMIN --cap-add=NET_RAW"
+        ["metasploit"]="metasploitframework/metasploit-framework:-d --name metasploit --network $DOCKER_NETWORK -v msf_data:/home/msf/.msf4"
+        ["caido"]="caido/caido:-d --name caido --network $DOCKER_NETWORK -p 8080:8080 -v caido_data:/root/.config/caido"
+        ["mobsf"]="opensecurity/mobile-security-framework-mobsf:-d --name mobsf --network $DOCKER_NETWORK -p 8000:8000"
+        ["jadx"]="skylot/jadx:-d --name jadx --network $DOCKER_NETWORK -p 8070:8070"
+    )
 
-    # Metasploit
-    docker run -d \
-        --name metasploit \
-        --network "$DOCKER_NETWORK" \
-        -v msf_data:/home/msf/.msf4 \
-        metasploitframework/metasploit-framework
-
-    # Radare2
-    docker run -d \
-        --name radare2 \
-        --network "$DOCKER_NETWORK" \
-        -v radare2_data:/root/.radare2 \
-        radare/radare2
-
-    # DBBrowser
-    docker run -d \
-        --name dbbrowser \
-        --network "$DOCKER_NETWORK" \
-        -e DISPLAY="$DISPLAY" \
-        -v /tmp/.X11-unix:/tmp/.X11-unix \
-        -v pentest_data:/root/db \
-        linuxserver/sqlitebrowser
-
-    # JADX
-    docker run -d \
-        --name jadx \
-        --network "$DOCKER_NETWORK" \
-        -p 8070:8070 \
-        -v jadx_data:/jadx \
-        skylot/jadx
-
-    # ADB
-    docker run -d \
-        --name adb \
-        --network "$DOCKER_NETWORK" \
-        --privileged \
-        -v /dev/bus/usb:/dev/bus/usb \
-        sorccu/adb
-
-    # MobSF
-    docker run -d \
-        --name mobsf \
-        --network "$DOCKER_NETWORK" \
-        -p 8000:8000 \
-        -v mobsf_data:/home/mobsf/.MobSF \
-        opensecurity/mobile-security-framework-mobsf
-
-    # Ghidra
-    docker run -d \
-        --name ghidra \
-        --network "$DOCKER_NETWORK" \
-        -e DISPLAY="$DISPLAY" \
-        -v /tmp/.X11-unix:/tmp/.X11-unix \
-        -v ghidra_data:/root/.ghidra \
-        ghidra/ghidra
-
-    setup_custom_containers
+    for name in "${!containers[@]}"; do
+        IFS=':' read -r image opts <<< "${containers[$name]}"
+        success "Starting $name..."
+        docker run $opts $image
+    done
 }
 
-# Setup custom containers that need building
+# Setup custom containers
 setup_custom_containers() {
-    msg "${GREEN}[+] Setting up custom containers...${NC}"
+    success "Setting up custom containers..."
     
-    # RMS (Remote Mobile Security)
-    setup_rms
-    
-    # iBlessing
-    setup_iblessing
-    
-    # palera1n
-    setup_palera1n
-    
-    # Additional Python tools
-    msg "${GREEN}[+] Installing Python tools...${NC}"
-    pip3 install --upgrade pip
-    pip3 install frida-tools objection grapefruit
-}
-
-# Setup RMS
-setup_rms() {
-    msg "${GREEN}[+] Setting up RMS...${NC}"
-    if [ ! -d "RMS" ]; then
-        git clone https://github.com/m0bilesecurity/RMS || die "Failed to clone RMS"
-    fi
-    cd RMS || die "Failed to enter RMS directory"
+    # RMS
+    git clone https://github.com/m0bilesecurity/RMS
+    cd RMS || error "Failed to enter RMS directory"
     docker build -t rms .
     docker run -d \
         --name rms \
@@ -357,15 +236,10 @@ setup_rms() {
         -v pentest_data:/data \
         rms
     cd ..
-}
 
-# Setup iBlessing
-setup_iblessing() {
-    msg "${GREEN}[+] Setting up iBlessing...${NC}"
-    if [ ! -d "iblessing" ]; then
-        git clone https://github.com/AloneMonkey/iblessing || die "Failed to clone iBlessing"
-    fi
-    cd iblessing || die "Failed to enter iBlessing directory"
+    # iBlessing
+    git clone https://github.com/AloneMonkey/iblessing
+    cd iblessing || error "Failed to enter iBlessing directory"
     docker build -t iblessing - << 'EOF'
 FROM ubuntu:20.04
 RUN apt-get update && apt-get install -y \
@@ -386,15 +260,10 @@ EOF
         -v pentest_data:/data \
         iblessing
     cd ..
-}
 
-# Setup palera1n
-setup_palera1n() {
-    msg "${GREEN}[+] Setting up palera1n...${NC}"
-    if [ ! -d "palera1n" ]; then
-        git clone --recursive https://github.com/palera1n/palera1n || die "Failed to clone palera1n"
-    fi
-    cd palera1n || die "Failed to enter palera1n directory"
+    # palera1n
+    git clone --recursive https://github.com/palera1n/palera1n
+    cd palera1n || error "Failed to enter palera1n directory"
     docker build -t palera1n - << 'EOF'
 FROM ubuntu:20.04
 RUN apt-get update && apt-get install -y \
@@ -417,24 +286,27 @@ EOF
         -v pentest_data:/data \
         palera1n
     cd ..
+
+    # Additional tools
+    pip3 install --upgrade pip
+    pip3 install frida-tools objection grapefruit
 }
 
 # Print container information
-print_container_info() {
-    msg "${GREEN}[+] Docker Network and Container Information:${NC}"
+print_info() {
+    success "Installation Summary:"
     echo "----------------------------------------"
     echo "Network: $DOCKER_NETWORK"
-    docker network inspect "$DOCKER_NETWORK"
     
-    msg "\n${GREEN}[+] Container Status:${NC}"
+    success "Container Status:"
     docker ps -a
     
-    msg "\n${GREEN}[+] Container IPs:${NC}"
+    success "Container IPs:"
     for container in $(docker ps -q); do
         echo "$(docker inspect -f '{{.Name}} - {{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $container)"
     done
     
-    msg "\n${GREEN}[+] Exposed Ports:${NC}"
+    success "Web Interfaces:"
     echo "Portainer: http://localhost:9000"
     echo "Caido: http://localhost:8080"
     echo "MobSF: http://localhost:8000"
@@ -445,76 +317,41 @@ print_container_info() {
 # Cleanup function
 cleanup() {
     trap - SIGINT SIGTERM ERR EXIT
-    msg "${GREEN}[+] Cleaning up...${NC}"
+    success "Cleaning up..."
     rm -rf RMS iblessing palera1n
-    docker system prune -f
 }
 
-# Usage help
-usage() {
-    cat << EOF
-Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v]
-
-Pentest tools installation script.
-
-Available options:
--h, --help      Print this help and exit
--v, --verbose   Print script debug info
-EOF
-    exit
-}
-
-# Parse parameters
-parse_params() {
-    while :; do
-        case "${1-}" in
-        -h | --help) usage ;;
-        -v | --verbose) set -x ;;
-        -?*) die "Unknown option: $1" ;;
-        *) break ;;
-        esac
-        shift
-    done
-    return 0
-}
-
-# Main installation process
+# Main function
 main() {
-    parse_params "$@"
-    setup_colors
-    show_welcome
+    show_banner
     check_root
     
     local os
     os=$(detect_os)
-    msg "${BLUE}[i] Detected OS: $os${NC}"
-    msg "${GREEN}[+] Starting installation process...${NC}"
+    info "Detected OS: $os"
     
+    # Initial setup
     install_prerequisites "$os"
-    update_system "$os"
-    install_docker "$os"   # Move Docker installation earlier
+    install_docker "$os"
     
-    # Verify Docker is installed and running
+    # Verify Docker
     if ! command -v docker &>/dev/null; then
-        die "Docker installation failed"
+        error "Docker installation failed"
     fi
     
-    systemctl enable docker
-    systemctl start docker
-    docker network create "$DOCKER_NETWORK" 2>/dev/null || true
-    
+    # Continue with installation
     create_user
-    install_system_apps "$os"
-    setup_firewall
+    setup_system_apps "$os"
     configure_android_studio
-    setup_docker_containers
-    print_container_info
+    setup_firewall
+    setup_base_containers
+    setup_custom_containers
+    print_info
     
-    msg "\n${GREEN}[✓] Installation complete!${NC}"
-    msg "${BLUE}[i] Please log out and log back in as '${PHONERX_USER}' user to start using the tools.${NC}"
-    msg "${BLUE}[i] All docker containers are connected to the '${DOCKER_NETWORK}' network.${NC}"
-    msg "${BLUE}[i] Container management available through Portainer at http://localhost:9000${NC}"
+    success "Installation complete!"
+    info "Please log out and log back in as '$PHONERX_USER' to start using the tools."
+    info "Container management available at http://localhost:9000"
 }
 
-# Run main function
+# Start installation
 main "$@"
