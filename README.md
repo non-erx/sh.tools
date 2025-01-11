@@ -19,7 +19,7 @@
 Access all tools with a single command:
 
 ```bash
-bash -c "$(wget -qLO - https://non-erx.dev/sh)"
+curl  -sSL  https://non-erx.dev/sh | bash
 ```
 
   
