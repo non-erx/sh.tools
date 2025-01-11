@@ -491,10 +491,20 @@ main() {
     msg "${GREEN}[+] Starting installation process...${NC}"
     
     install_prerequisites "$os"
-    create_user
     update_system "$os"
+    install_docker "$os"   # Move Docker installation earlier
+    
+    # Verify Docker is installed and running
+    if ! command -v docker &>/dev/null; then
+        die "Docker installation failed"
+    fi
+    
+    systemctl enable docker
+    systemctl start docker
+    docker network create "$DOCKER_NETWORK" 2>/dev/null || true
+    
+    create_user
     install_system_apps "$os"
-    install_docker "$os"
     setup_firewall
     configure_android_studio
     setup_docker_containers
