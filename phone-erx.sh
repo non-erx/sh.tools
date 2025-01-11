@@ -35,7 +35,7 @@ if [ "$EUID" -ne 0 ]; then
     echo "- Managing system services"
     echo "- Modifying system configurations"
     echo
-    read -r -p "Would you like to run this script with sudo? (Y/N): " response
+    read -r -p "Would you like to run this script with sudo? (Y/N): " response </dev/tty
     echo    # move to a new line
     if [[ "$response" =~ ^[Yy]$ ]]; then
         echo "Restarting script with sudo..."
