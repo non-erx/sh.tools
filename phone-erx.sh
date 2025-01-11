@@ -1,7 +1,8 @@
 #!/bin/bash
 
-set -e 
+set -e  # Exit on error
 
+# Error handling
 handle_error() {
     echo "Error occurred in script at line $1"
     exit 1
@@ -9,25 +10,43 @@ handle_error() {
 
 trap 'handle_error $LINENO' ERR
 
+# ASCII Art Welcome Banner
 show_welcome() {
     echo '
-    ██████╗ ██╗  ██╗ ██████╗ ███╗   ██╗███████╗   ███████╗██████╗ ██╗  ██╗
-    ██╔══██╗██║  ██║██╔═══██╗████╗  ██║██╔════╝   ██╔════╝██╔══██╗╚██╗██╔╝
-    ██████╔╝███████║██║   ██║██╔██╗ ██║█████╗     █████╗  ██████╔╝ ╚███╔╝ 
-    ██╔═══╝ ██╔══██║██║   ██║██║╚██╗██║██╔══╝     ██╔══╝  ██╔══██╗ ██╔██╗ 
-    ██║     ██║  ██║╚██████╔╝██║ ╚████║███████╗   ███████╗██║  ██║██╔╝ ██╗
-    ╚═╝     ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝   ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝
-                                                                by @non-erx
+    ██████╗ ██╗  ██╗ ██████╗ ███╗   ██╗███████╗██████╗ ██╗  ██╗
+    ██╔══██╗██║  ██║██╔═══██╗████╗  ██║██╔════╝██╔══██╗╚██╗██╔╝
+    ██████╔╝███████║██║   ██║██╔██╗ ██║█████╗  ██████╔╝ ╚███╔╝ 
+    ██╔═══╝ ██╔══██║██║   ██║██║╚██╗██║██╔══╝  ██╔══██╗ ██╔██╗ 
+    ██║     ██║  ██║╚██████╔╝██║ ╚████║███████╗██║  ██║██╔╝ ██╗
+    ╚═╝     ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝
+                                                    by @non-erx
     '
     echo "Pentest Toolset Installation Script"
     echo "-----------------------------------"
 }
 
+# Check if script is run as root
 if [ "$EUID" -ne 0 ]; then 
-    echo "Please run as root or with sudo"
-    exit 1
+    echo "This script requires root privileges for the following operations:"
+    echo "- Installing system packages and dependencies"
+    echo "- Creating new user accounts"
+    echo "- Configuring Docker and network settings"
+    echo "- Setting up firewall rules"
+    echo "- Managing system services"
+    echo "- Modifying system configurations"
+    echo -e "\nWould you like to run this script with sudo? (Y/N): "
+    read -r response
+    if [[ "$response" =~ ^[Yy]$ ]]; then
+        echo "Restarting script with sudo..."
+        sudo "$0" "$@"
+        exit $?
+    else
+        echo "Exiting script as root privileges are required."
+        exit 1
+    fi
 fi
 
+# Create phonerx user with sudo privileges
 create_user() {
     echo "[+] Creating phonerx user..."
     useradd -m -s /bin/bash phonerx
@@ -36,6 +55,7 @@ create_user() {
     usermod -aG docker phonerx
 }
 
+# Detect OS
 detect_os() {
     if [ -f /etc/arch-release ]; then
         echo "arch"
@@ -46,20 +66,21 @@ detect_os() {
     fi
 }
 
+# Update system based on OS
 update_system() {
     local os=$1
     echo "[+] Updating system..."
     if [ "$os" == "arch" ]; then
         pacman -Syu --noconfirm
-
+        # Install snapd for Arch
         pacman -S --noconfirm snapd
         systemctl enable --now snapd.socket
         systemctl start snapd.service
-
+        # Enable classic snap support
         ln -s /var/lib/snapd/snap /snap
     elif [ "$os" == "ubuntu" ]; then
         apt update && apt upgrade -y
-
+        # Install snapd for Ubuntu if not present
         if ! command -v snap &> /dev/null; then
             apt install -y snapd
             systemctl enable --now snapd.socket
@@ -67,51 +88,60 @@ update_system() {
         fi
     fi
     
+    # Wait for snap to be fully initialized
     echo "[+] Waiting for snap service to initialize..."
     sleep 10
     snap wait system seed.loaded
 }
 
+# Install system applications
 install_system_apps() {
     local os=$1
     echo "[+] Installing system applications..."
     
     if [ "$os" == "arch" ]; then
-        
+        # Install yay AUR helper first
         git clone https://aur.archlinux.org/yay.git
         cd yay
         makepkg -si --noconfirm
         cd ..
         rm -rf yay
         
+        # VSCode
         pacman -S --noconfirm code gcc
         
+        # Android Studio
         pacman -S --noconfirm android-studio
         
+        # Tabby
         yay -S tabby-bin --noconfirm
         
+        # Zen Browser
         yay -S zen-browser --noconfirm
         
     elif [ "$os" == "ubuntu" ]; then
-
+        # VSCode
         wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /usr/share/keyrings/microsoft-archive-keyring.gpg
         echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft-archive-keyring.gpg] https://packages.microsoft.com/repos/vscode stable main" | tee /etc/apt/sources.list.d/vscode.list
         apt update
         apt install -y code g++
         
+        # Android Studio
         add-apt-repository ppa:maarten-fonville/android-studio -y
         apt update
         apt install -y android-studio
         
+        # Tabby
         wget https://github.com/Eugeny/tabby/releases/latest/download/tabby-1.0.0-linux-x64.deb
         dpkg -i tabby-1.0.0-linux-x64.deb
         apt install -f -y
         
+        # Zen Browser
         snap install zen-browser
     fi
 }
 
-
+# Configure Android Studio for Docker
 configure_android_studio() {
     echo "[+] Configuring Android Studio for Docker network..."
     mkdir -p /home/phonerx/.AndroidStudio
@@ -122,7 +152,7 @@ EOF
     chown -R phonerx:phonerx /home/phonerx/.AndroidStudio
 }
 
-
+# Install and configure firewall
 setup_firewall() {
     echo "[+] Setting up UFW firewall..."
     apt install -y ufw
@@ -142,6 +172,7 @@ setup_firewall() {
     ufw enable
 }
 
+# Install Docker and setup network
 install_docker() {
     local os=$1
     echo "[+] Installing Docker..."
@@ -157,17 +188,19 @@ install_docker() {
     
     systemctl enable docker
     systemctl start docker
-
+    
+    # Create pentest network
     docker network create ptools-erx
 }
 
-
+# Setup Docker containers
 setup_docker_containers() {
     echo "[+] Setting up Docker containers..."
-
+    
+    # Create shared Docker volume for persistent data
     docker volume create pentest_data
 
-    # Portainer
+    # Portainer (Container Management)
     docker run -d \
         --name portainer \
         --network ptools-erx \
@@ -256,7 +289,7 @@ setup_docker_containers() {
         -v ghidra_data:/root/.ghidra \
         ghidra/ghidra
 
-    # RMS
+    # RMS (Remote Mobile Security)
     echo "[+] Installing RMS..."
     if [ ! -d "RMS" ]; then
         git clone https://github.com/m0bilesecurity/RMS || {
@@ -274,7 +307,7 @@ setup_docker_containers() {
         rms
     cd ..
 
-    # iBlessing
+    # iBlessing (iOS Security Tool)
     echo "[+] Installing iBlessing..."
     if [ ! -d "iblessing" ]; then
         git clone https://github.com/AloneMonkey/iblessing || {
@@ -304,7 +337,7 @@ EOF
         iblessing
     cd ..
 
-    # palera1n
+    # palera1n (iOS Jailbreak Tool)
     echo "[+] Installing palera1n..."
     if [ ! -d "palera1n" ]; then
         git clone --recursive https://github.com/palera1n/palera1n || {
@@ -336,6 +369,7 @@ EOF
         palera1n
     cd ..
 
+    # Install additional tools
     echo "[+] Installing additional tools..."
     
     # Frida
@@ -348,6 +382,7 @@ EOF
     pip3 install grapefruit
 }
 
+# Print container information
 print_container_info() {
     echo "[+] Docker Network and Container Information:"
     echo "----------------------------------------"
@@ -370,13 +405,14 @@ print_container_info() {
     echo "RMS: http://localhost:5000"
 }
 
+# Cleanup function
 cleanup() {
     echo "[+] Cleaning up installation files..."
     rm -rf RMS iblessing palera1n
     docker system prune -f
 }
 
-
+# Main installation process
 main() {
     show_welcome
     
@@ -403,7 +439,7 @@ main() {
     echo "Please log out and log back in as 'phonerx' user to start using the tools."
     echo "All docker containers are connected to the 'ptools-erx' network."
     echo "Container management available through Portainer at http://localhost:9000"
-    echo "Much love from @non-erx"
 }
 
+# Run main function
 main
