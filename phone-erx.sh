@@ -27,23 +27,28 @@ show_welcome() {
 
 # Check if script is run as root
 if [ "$EUID" -ne 0 ]; then 
-    echo "This script requires root privileges for the following operations:"
-    echo "- Installing system packages and dependencies"
-    echo "- Creating new user accounts"
-    echo "- Configuring Docker and network settings"
-    echo "- Setting up firewall rules"
-    echo "- Managing system services"
-    echo "- Modifying system configurations"
-    echo -e "\nWould you like to run this script with sudo? (Y/N): "
-    read -r response
-    if [[ "$response" =~ ^[Yy]$ ]]; then
-        echo "Restarting script with sudo..."
-        sudo "$0" "$@"
-        exit $?
-    else
-        echo "Exiting script as root privileges are required."
-        exit 1
-    fi
+    echo -e "\nThis script requires root privileges for:"
+    echo "- Installing system packages"
+    echo "- Creating users"
+    echo "- Configuring Docker"
+    echo "- Setting up firewall"
+    echo "- Managing services"
+    
+    while true; do
+        read -p "Do you want to continue with sudo? [y/n]: " choice
+        case "$choice" in 
+            [yY]|[yY][eE][sS] )
+                exec sudo "$0" "$@"
+                ;;
+            [nN]|[nN][oO] )
+                echo "Exiting..."
+                exit 1
+                ;;
+            * )
+                echo "Please answer yes or no"
+                ;;
+        esac
+    done
 fi
 
 # Create phonerx user with sudo privileges
