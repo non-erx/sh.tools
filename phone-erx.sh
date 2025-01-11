@@ -48,20 +48,20 @@ check_root() {
         echo "- Managing system services"
         
         while true; do
-            read -r -p "Would you like to run this script with sudo? (Y/N): " response
-            if [[ $response =~ ^[YyNn]$ ]]; then
-                break
-            fi
-            echo "Please enter Y or N"
+            read -r -p "Would you like to run this script with sudo? (Y/N): " response < /dev/tty
+            case "$response" in
+                [Yy]) 
+                    exec sudo bash "$0" "$@"
+                    ;;
+                [Nn])
+                    echo "Exiting..."
+                    exit 1
+                    ;;
+                *)
+                    echo "Please answer Y or N"
+                    ;;
+            esac
         done
-        case "$response" in 
-            [Yy]* )
-                exec sudo bash "$0" "$@"
-                ;;
-            * )
-                error "Root privileges required. Exiting..."
-                ;;
-        esac
     fi
 }
 
