@@ -47,8 +47,13 @@ check_root() {
         echo "- Setting up firewall rules"
         echo "- Managing system services"
         
-        echo -n "Would you like to run this script with sudo? (Y/N): "
-        read -r response
+        while true; do
+            read -r -p "Would you like to run this script with sudo? (Y/N): " response
+            if [[ $response =~ ^[YyNn]$ ]]; then
+                break
+            fi
+            echo "Please enter Y or N"
+        done
         case "$response" in 
             [Yy]* )
                 exec sudo bash "$0" "$@"
