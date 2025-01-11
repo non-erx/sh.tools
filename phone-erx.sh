@@ -48,7 +48,6 @@ check_root() {
         echo "- Managing system services"
         read -r -p "Please select an option: " choice </dev/tty
         read -p "Would you like to run this script with sudo? (Y/N): " -n 1 -r REPLY
-        echo
         if [[ $REPLY =~ ^[Yy]$ ]]; then
             exec sudo "$0" "$@"
         else
