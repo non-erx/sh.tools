@@ -108,7 +108,7 @@ install_prerequisites() {
     elif [ "$os" == "arch" ]; then
         pacman -Syu --noconfirm
         pacman -S --noconfirm curl wget git python-pip ufw
-        git clone https://aur.archlinux.org/snapd.git
+        git clone https://aur.archlinux.org/snapd-git.git
         cd snapd
         makepkg -si
     fi
