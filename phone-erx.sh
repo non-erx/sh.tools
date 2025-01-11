@@ -35,15 +35,11 @@ if [ "$EUID" -ne 0 ]; then
     echo "- Managing system services"
     echo "- Modifying system configurations"
     echo -e "\nWould you like to run this script with sudo? (Y/N): "
-    read -r -p "" response
-    while [[ ! "$response" =~ ^[YyNn]$ ]]; do
-        echo -e "Please enter Y or N: "
-        read -r -p "" response
-    done
-    
+    read -r response
     if [[ "$response" =~ ^[Yy]$ ]]; then
         echo "Restarting script with sudo..."
-        exec sudo "$0" "$@"
+        sudo "$0" "$@"
+        exit $?
     else
         echo "Exiting script as root privileges are required."
         exit 1
