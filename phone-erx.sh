@@ -35,7 +35,7 @@ if [ "$EUID" -ne 0 ]; then
     echo "- Managing services"
     
     while true; do
-        read -r -p "Do you want to continue with sudo? [y/n]:" choice  </dev/tty
+        read -r -p "Do you want to continue with sudo? [y/n]:" choice </dev/tty
         case "$choice" in 
             [yY]|[yY][eE][sS] )
                 exec sudo "$0" "$@"
