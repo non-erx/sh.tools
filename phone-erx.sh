@@ -34,9 +34,13 @@ if [ "$EUID" -ne 0 ]; then
     echo "- Setting up firewall rules"
     echo "- Managing system services"
     echo "- Modifying system configurations"
-    echo
-    read -r -p "Would you like to run this script with sudo? (Y/N): " response </dev/tty
-    echo    # move to a new line
+    echo -e "\nWould you like to run this script with sudo? (Y/N): "
+    read -r -p "" response
+    while [[ ! "$response" =~ ^[YyNn]$ ]]; do
+        echo -e "Please enter Y or N: "
+        read -r -p "" response
+    done
+    
     if [[ "$response" =~ ^[Yy]$ ]]; then
         echo "Restarting script with sudo..."
         exec sudo "$0" "$@"
