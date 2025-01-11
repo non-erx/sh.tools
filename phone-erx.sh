@@ -25,55 +25,30 @@ show_welcome() {
     echo "-----------------------------------"
 }
 
-# Enable debug mode and error handling
-set -e  # Exit on error
-# set -x  # Uncomment this line to see each command being executed
-
-# Error handling function
-handle_error() {
-    local line_num=$1
-    local error_code=$2
-    echo "Error occurred in script at line $line_num (Error code: $error_code)"
-    echo "Last command executed: $BASH_COMMAND"
-    exit $error_code
-}
-
-# Set up error trap
-trap 'handle_error ${LINENO} $?' ERR
-
 # Check if script is run as root
-check_root() {
-    if [ "$EUID" -ne 0 ]; then 
-        echo "This script requires root privileges for the following operations:"
-        echo "- Installing system packages and dependencies"
-        echo "- Creating new user accounts"
-        echo "- Configuring Docker and network settings"
-        echo "- Setting up firewall rules"
-        echo "- Managing system services"
-        echo "- Modifying system configurations"
-        
-        while true; do
-            echo -n -e "\nWould you like to run this script with sudo? (Y/N): "
-            read -r response
-            case $response in
-                [Yy]* )
-                    echo "Restarting script with sudo..."
-                    exec sudo bash "$0" "$@"
-                    ;;
-                [Nn]* )
-                    echo "Exiting script as root privileges are required."
-                    exit 1
-                    ;;
-                * )
-                    echo "Please answer Y or N."
-                    ;;
-            esac
-        done
+if [ "$EUID" -ne 0 ]; then 
+    echo "This script requires root privileges for the following operations:"
+    echo "- Installing system packages and dependencies"
+    echo "- Creating new user accounts"
+    echo "- Configuring Docker and network settings"
+    echo "- Setting up firewall rules"
+    echo "- Managing system services"
+    echo "- Modifying system configurations"
+    echo -e "\nWould you like to run this script with sudo? (Y/N): "
+    read -r -p "" response
+    while [[ ! "$response" =~ ^[YyNn]$ ]]; do
+        echo -e "Please enter Y or N: "
+        read -r -p "" response
+    done
+    
+    if [[ "$response" =~ ^[Yy]$ ]]; then
+        echo "Restarting script with sudo..."
+        exec sudo "$0" "$@"
+    else
+        echo "Exiting script as root privileges are required."
+        exit 1
     fi
-}
-
-# Run root check
-check_root
+fi
 
 # Create phonerx user with sudo privileges
 create_user() {
