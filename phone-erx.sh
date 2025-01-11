@@ -46,16 +46,25 @@ check_root() {
         echo "- Configuring Docker and network settings"
         echo "- Setting up firewall rules"
         echo "- Managing system services"
-        read -r -p "Please select an option: " choice </dev/tty
-        read -p "Would you like to run this script with sudo? (Y/N): " -n 1 -r REPLY
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
-            exec sudo "$0" "$@"
-        else
-            echo "Exiting..."
-            exit 1
-        fi
+        
+        read -r -p "Would you like to run this script with sudo? (Y/N): " choice </dev/tty
+        case $choice in
+            [Yy]*)
+                exec sudo bash "$0" "$@"
+                ;;
+            [Nn]*)
+                echo "Exiting..."
+                exit 1
+                ;;
+            *)
+                echo "Invalid choice. Please answer Y or N."
+                exit 1
+                ;;
+        esac
     fi
 }
+
+
 
 # Check and install Docker first
 install_docker() {
