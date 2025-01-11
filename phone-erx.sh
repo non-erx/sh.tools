@@ -104,12 +104,13 @@ install_prerequisites() {
     local os=$1
     success "Installing prerequisites..."
     if [ "$os" == "ubuntu" ]; then
+        rm -rf snapd
         apt update
         apt install -y curl wget git python3-pip software-properties-common snapd ufw
     elif [ "$os" == "arch" ]; then
+        rm -rf snapd
         pacman -Syu --noconfirm
         pacman -S --noconfirm curl wget git python-pip ufw
-        rm -rf snapd
         git clone https://aur.archlinux.org/snapd-git.git
         cd snapd
         makepkg -si
