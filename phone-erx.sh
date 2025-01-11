@@ -107,7 +107,10 @@ install_prerequisites() {
         apt install -y curl wget git python3-pip software-properties-common snapd ufw
     elif [ "$os" == "arch" ]; then
         pacman -Syu --noconfirm
-        pacman -S --noconfirm curl wget git python-pip snapd ufw
+        pacman -S --noconfirm curl wget git python-pip ufw
+        git clone https://aur.archlinux.org/snapd.git
+        cd snapd
+        makepkg -si
     fi
 }
 
