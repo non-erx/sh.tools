@@ -46,7 +46,7 @@ check_root() {
         echo "- Configuring Docker and network settings"
         echo "- Setting up firewall rules"
         echo "- Managing system services"
-        
+        read -r -p "Please select an option: " choice </dev/tty
         read -p "Would you like to run this script with sudo? (Y/N): " -n 1 -r REPLY
         echo
         if [[ $REPLY =~ ^[Yy]$ ]]; then
