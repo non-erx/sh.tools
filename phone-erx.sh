@@ -18,6 +18,7 @@ NC='\033[0m' # No Color
 
 # Show ASCII banner
 show_banner() {
+    clear
     cat << "EOF"
     ██████╗ ██╗  ██╗ ██████╗ ███╗   ██╗███████╗   ███████╗██████╗ ██╗  ██╗
     ██╔══██╗██║  ██║██╔═══██╗████╗  ██║██╔════╝   ██╔════╝██╔══██╗╚██╗██╔╝
@@ -108,6 +109,7 @@ install_prerequisites() {
     elif [ "$os" == "arch" ]; then
         pacman -Syu --noconfirm
         pacman -S --noconfirm curl wget git python-pip ufw
+        rm -rf snapd
         git clone https://aur.archlinux.org/snapd-git.git
         cd snapd
         makepkg -si
