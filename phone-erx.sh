@@ -238,7 +238,7 @@ declare -A containers=(
     ["metasploit"]="metasploitframework/metasploit-framework:-d --name metasploit --network $DOCKER_NETWORK -v msf_data:/home/msf/.msf4"
     ["caido"]="caido/caido:-d --name caido --network $DOCKER_NETWORK -p 8080:8080 -v caido_data:/root/.config/caido"
     ["mobsf"]="opensecurity/mobile-security-framework-mobsf:-d --name mobsf --network $DOCKER_NETWORK -p 8000:8000"
-    ["jadx"]="skylot/jadx:-d --name jadx --network $DOCKER_NETWORK -p 8070:8070"
+    #["jadx"]="skylot/jadx:-d --name jadx --network $DOCKER_NETWORK -p 8070:8070"
 )
 
 for name in "${!containers[@]}"; do
