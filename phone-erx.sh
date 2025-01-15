@@ -257,7 +257,7 @@ setup_custom_containers() {
     success "Setting up custom containers..."
     
     # RMS
-    git clone https://github.com/m0bilesecurity/RMS
+    git clone https://github.com/m0bilesecurity/RMS-Runtime-Mobile-Security
     cd RMS || error "Failed to enter RMS directory"
     docker build -t rms .
     docker run -d \
@@ -266,30 +266,6 @@ setup_custom_containers() {
         -p 5000:5000 \
         -v pentest_data:/data \
         rms
-    cd ..
-
-    # iBlessing
-    git clone https://github.com/AloneMonkey/iblessing
-    cd iblessing || error "Failed to enter iBlessing directory"
-    docker build -t iblessing - << 'EOF'
-FROM ubuntu:20.04
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    cmake \
-    libzip-dev \
-    libssl-dev \
-    git \
-    && rm -rf /var/lib/apt/lists/*
-COPY . /iblessing
-WORKDIR /iblessing
-RUN cmake . && make
-ENTRYPOINT ["/iblessing/iblessing"]
-EOF
-    docker run -d \
-        --name iblessing \
-        --network "$DOCKER_NETWORK" \
-        -v pentest_data:/data \
-        iblessing
     cd ..
 
     # palera1n
@@ -316,6 +292,30 @@ EOF
         -v /dev/bus/usb:/dev/bus/usb \
         -v pentest_data:/data \
         palera1n
+    cd ..
+
+    # iBlessing
+    git clone https://github.com/Soulghost/iblessing
+    cd iblessing || error "Failed to enter iBlessing directory"
+    docker build -t iblessing - << 'EOF'
+FROM ubuntu:20.04
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    cmake \
+    libzip-dev \
+    libssl-dev \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+COPY . /iblessing
+WORKDIR /iblessing
+RUN cmake . && make
+ENTRYPOINT ["/iblessing/iblessing"]
+EOF
+    docker run -d \
+        --name iblessing \
+        --network "$DOCKER_NETWORK" \
+        -v pentest_data:/data \
+        iblessing
     cd ..
 
     # Additional tools
