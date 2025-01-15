@@ -219,7 +219,7 @@ setup_base_containers() {
 
     # Common pentesting tools
     declare -A containers=(
-        ["sqlmap"]="ahacking/sqlmap:-d --name sqlmap --network $DOCKER_NETWORK -v pentest_data:/root/.sqlmap"
+        #["sqlmap"]="ahacking/sqlmap:-d --name sqlmap --network $DOCKER_NETWORK -v pentest_data:/root/.sqlmap"
         ["nmap"]="instrumentisto/nmap:-d --name nmap --network $DOCKER_NETWORK --cap-add=NET_ADMIN --cap-add=NET_RAW"
         ["metasploit"]="metasploitframework/metasploit-framework:-d --name metasploit --network $DOCKER_NETWORK -v msf_data:/home/msf/.msf4"
         ["caido"]="caido/caido:-d --name caido --network $DOCKER_NETWORK -p 8080:8080 -v caido_data:/root/.config/caido"
