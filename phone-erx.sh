@@ -257,6 +257,7 @@ setup_custom_containers() {
     success "Setting up custom containers..."
     
     # RMS
+    sudo rm -rf RMS-Runtime*
     git clone https://github.com/m0bilesecurity/RMS-Runtime-Mobile-Security
     cd RMS-Runtime-Mobile-Security || error "Failed to enter RMS directory"
     docker build -t rms .
