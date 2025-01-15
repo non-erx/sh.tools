@@ -157,7 +157,7 @@ setup_system_apps() {
         # Tabby
         rm -rf tabby-1.0.219-linux-*
         wget "https://github.com/Eugeny/tabby/releases/download/v1.0.219/tabby-1.0.219-linux-x64.deb"
-        sudo dpkg -i tabby-1.0.219-linux-x64.deb | sudo apt instal -y
+        sudo dpkg -i tabby-1.0.219-linux-x64.deb
         rm tabby-1.0.219-linux-x64.deb
         
         # Zen Browser
