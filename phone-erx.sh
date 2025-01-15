@@ -161,7 +161,9 @@ setup_system_apps() {
         rm tabby-1.0.219-linux-x64.deb
         
         # Zen Browser
-        snap install zen-browser
+        rm -rf zen*
+        echo 2 | bash <(curl https://updates.zen-browser.app/appimage.sh) 
+        echo 1 | bash <(curl https://updates.zen-browser.app/appimage.sh) 
     fi
 }
 
