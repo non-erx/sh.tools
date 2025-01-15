@@ -155,10 +155,10 @@ setup_system_apps() {
         apt update && apt install -y android-studio
         
         # Tabby
-        rm -rf tabby-1.0.219-linux-arm64*
-        wget "https://github.com/Eugeny/tabby/releases/download/v1.0.219/tabby-1.0.219-linux-arm64.deb"
-        sudo dpkg -i tabby-1.0.219-linux-arm64.deb | sudo apt instal -f -y
-        rm tabby-1.0.219-linux-arm64.deb
+        rm -rf tabby-1.0.219-linux-*
+        wget "https://github.com/Eugeny/tabby/releases/download/v1.0.219/tabby-1.0.219-linux-x64.deb"
+        sudo dpkg -i tabby-1.0.219-linux-x64.deb | sudo apt instal -y
+        rm tabby-1.0.219-linux-x64.deb
         
         # Zen Browser
         snap install zen-browser
