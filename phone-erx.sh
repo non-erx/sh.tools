@@ -200,14 +200,25 @@ setup_firewall() {
 # Setup base containers
 setup_base_containers() {
     success "Setting up base containers..."
+    # Function to check if container exists
     
-    # Create volumes
-    docker volume create pentest_data
-    docker volume create portainer_data
-    docker volume create msf_data
-    docker volume create caido_data
+container_exists() {
+    local name=$1
+    if docker ps -a --format '{{.Names}}' | grep -q "^${name}$"; then
+        return 0  # Container exists
+    else
+        return 1  # Container doesn't exist
+    fi
+}
 
-    # Portainer
+# Create volumes (doesn't error if they exist)
+docker volume create pentest_data
+docker volume create portainer_data
+docker volume create msf_data
+docker volume create caido_data
+
+# Portainer
+if ! container_exists "portainer"; then
     docker run -d \
         --name portainer \
         --network "$DOCKER_NETWORK" \
@@ -216,22 +227,29 @@ setup_base_containers() {
         -v /var/run/docker.sock:/var/run/docker.sock \
         -v portainer_data:/data \
         portainer/portainer-ce
+else
+    echo "Container 'portainer' already exists, skipping..."
+fi
 
-    # Common pentesting tools
-    declare -A containers=(
-        #["sqlmap"]="ahacking/sqlmap:-d --name sqlmap --network $DOCKER_NETWORK -v pentest_data:/root/.sqlmap"
-        ["nmap"]="instrumentisto/nmap:-d --name nmap --network $DOCKER_NETWORK --cap-add=NET_ADMIN --cap-add=NET_RAW"
-        ["metasploit"]="metasploitframework/metasploit-framework:-d --name metasploit --network $DOCKER_NETWORK -v msf_data:/home/msf/.msf4"
-        ["caido"]="caido/caido:-d --name caido --network $DOCKER_NETWORK -p 8080:8080 -v caido_data:/root/.config/caido"
-        ["mobsf"]="opensecurity/mobile-security-framework-mobsf:-d --name mobsf --network $DOCKER_NETWORK -p 8000:8000"
-        ["jadx"]="skylot/jadx:-d --name jadx --network $DOCKER_NETWORK -p 8070:8070"
-    )
+# Common pentesting tools
+declare -A containers=(
+    #["sqlmap"]="ahacking/sqlmap:-d --name sqlmap --network $DOCKER_NETWORK -v pentest_data:/root/.sqlmap"
+    ["nmap"]="instrumentisto/nmap:-d --name nmap --network $DOCKER_NETWORK --cap-add=NET_ADMIN --cap-add=NET_RAW"
+    ["metasploit"]="metasploitframework/metasploit-framework:-d --name metasploit --network $DOCKER_NETWORK -v msf_data:/home/msf/.msf4"
+    ["caido"]="caido/caido:-d --name caido --network $DOCKER_NETWORK -p 8080:8080 -v caido_data:/root/.config/caido"
+    ["mobsf"]="opensecurity/mobile-security-framework-mobsf:-d --name mobsf --network $DOCKER_NETWORK -p 8000:8000"
+    ["jadx"]="skylot/jadx:-d --name jadx --network $DOCKER_NETWORK -p 8070:8070"
+)
 
-    for name in "${!containers[@]}"; do
+for name in "${!containers[@]}"; do
+    if ! container_exists "$name"; then
         IFS=':' read -r image opts <<< "${containers[$name]}"
-        success "Starting $name..."
+        echo "Starting $name..."
         docker run $opts $image
-    done
+    else
+        echo "Container '$name' already exists, skipping..."
+    fi
+done
 }
 
 # Setup custom containers
