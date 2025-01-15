@@ -156,7 +156,7 @@ setup_system_apps() {
         
         # Tabby
         curl -O "https://github.com/Eugeny/tabby/releases/download/v1.0.219/tabby-1.0.219-linux-arm64.deb"
-        dpkg -i tabby-1.0.219-linux-arm64.deb || apt install -f -y
+        sudo dpkg -i tabby-1.0.219-linux-arm64.deb
         rm tabby-1.0.219-linux-arm64.deb
         
         # Zen Browser
