@@ -81,35 +81,35 @@ A comprehensive mobile application security testing environment with integrated 
 ### 📋 TO-DO List
 ### Distribution Support
 -   Complete Ubuntu-based installation script
-    -   Test on fresh Ubuntu 23.10 installation
-    -   Validate all tool dependencies
-    -   Add error handling and recovery
-    -   Document known issues
+    -   ☐ Test on fresh Ubuntu 23.10 installation
+    -   ☐ Validate all tool dependencies
+    -   ☐ Add error handling and recovery
+    -   ☐ Document known issues
 -   Develop Arch Linux installation script
-    -   Adapt package names for pacman
-    -   Test package availability
-    -   Configure AUR helper
-    -   Validate systemd services
+    -   ☐ Adapt package names for pacman
+    -   ☐ Test package availability
+    -   ☐ Configure AUR helper
+    -   ☐ Validate systemd services
 ### Containerization & Virtualization
 -   Create Proxmox LXC Template
-    -   Define resource requirements
-    -   Configure networking
-    -   Test GUI functionality
-    -   Document deployment process
-    -   Create automated setup script
+    -   ☐ Define resource requirements
+    -   ☐ Configure networking
+    -   ☐ Test GUI functionality
+    -   ☐ Document deployment process
+    -   ☐ Create automated setup script
 -   Build Arch Linux VM Image
-    -   Create base image with necessary tools
-    -   Configure automatic updates
-    -   Add snapshot functionality
-    -   Test on different hypervisors
-    -   Create distribution method
+    -   ☐ Create base image with necessary tools
+    -   ☐ Configure automatic updates
+    -   ☐ Add snapshot functionality
+    -   ☐ Test on different hypervisors
+    -   ☐ Create distribution method
 ### Future Enhancements
--   Automated tool updates
--   Custom tool configurations
--   User preference persistence
--   Backup and restore functionality
--   Performance optimization
--   Documentation improvements
+-   ☐ Automated tool updates
+-   ☐ Custom tool configurations
+-   ☐ User preference persistence
+-   ☐ Backup and restore functionality
+-   ☐ Performance optimization
+-   ☐ Documentation improvements
   
 ---
 
