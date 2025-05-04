@@ -4,7 +4,7 @@
 
   
 
-<div  align="center">A collection of tools for easier work with the terminal and other tools written in bash.</div>
+<div  align="center">A collection of shell tools for easier work with the terminal .</div>
 
 <div  align="center"><i>Made with love by @non-erx!❤️</i></div>
 
