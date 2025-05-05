@@ -96,7 +96,7 @@ else
     echo "  $((i+1)). ${interfaces[$i]}"
   done
   while true; do
-    read -p "Select an interface (1-${#interfaces[@]}): " idx
+    read -p "Select an interface (1-${#interfaces[@]}): " idx </dev/tty
     if [[ "$idx" =~ ^[0-9]+$ ]] && (( idx >= 1 && idx <= ${#interfaces[@]} )); then
       interface="${interfaces[$((idx-1))]}"
       break
@@ -119,20 +119,20 @@ search_domains=()
 
 if [ "$dhcp_enabled" = "no" ]; then
   while true; do
-    read -p "Enter IP (CIDR) (e.g. 192.168.1.100/24): " ip_cidr
+    read -p "Enter IP (CIDR) (e.g. 192.168.1.100/24): " ip_cidr </dev/tty
     validate_cidr "$ip_cidr" && addresses+=("$ip_cidr") && break
     echo "Invalid CIDR."
   done
 
   while true; do
-    read -p "Gateway IP: " gateway
+    read -p "Gateway IP: " gateway </dev/tty
     validate_ip "$gateway" && break
     echo "Invalid IP."
   done
 
   echo "DNS servers (leave empty to finish):"
   while true; do
-    read -p "DNS: " dns
+    read -p "DNS: " dns </dev/tty
     [ -z "$dns" ] && break
     validate_ip "$dns" && nameservers+=("$dns") || echo "Invalid DNS IP."
   done
@@ -143,7 +143,7 @@ if [ "$dhcp_enabled" = "no" ]; then
 
   if [ "$(get_yes_no "Add search domains?" "n")" = "yes" ]; then
     while true; do
-      read -p "Search domain: " domain
+      read -p "Search domain: " domain </dev/tty
       [ -z "$domain" ] && break
       search_domains+=("$domain")
     done
