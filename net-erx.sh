@@ -45,7 +45,7 @@ get_yes_no() {
   local prompt=$1
   local default=$2
   while true; do
-    read -p "$prompt (y/n) [$default]: " input
+    read -p "$prompt (y/n) [$default]: " input </dev/tty
     input=${input:-$default}
     case $input in
       [Yy]*) echo "yes"; return ;;
