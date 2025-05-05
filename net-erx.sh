@@ -36,7 +36,7 @@ validate_cidr() {
 get_input_with_default() {
   local prompt=$1
   local default=$2
-  read -p "$prompt [$default]: " input
+  read -p "$prompt [$default]: " input </dev/tty
   echo "${input:-$default}"
 }
 
