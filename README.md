@@ -41,6 +41,19 @@ A streamlined Docker management tool that provides quick access to essential Doc
 - Container operations (create, remove, shell access)
 - User-friendly interface with color-coded output
 
+2. Net-erx 🌐
+
+A network configuration utility for Linux systems using Netplan:
+
+- Configure static IP addresses with CIDR notation
+- Set up gateway and DNS servers
+- Manage search domains
+- Automatic interface detection
+- Interactive prompts with sensible defaults
+- Immediate application of network changes
+- Validates all inputs for correctness
+- Works with existing or creates new Netplan configurations
+
 <div  align="center">
 
 <sub>Check out my silly web-page -> <a  href="https://non-erx.dev">non-erx.dev</a></sub>
