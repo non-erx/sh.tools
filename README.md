@@ -32,8 +32,6 @@ curl  -sSL  https://non-erx.dev/sh | bash
 
 A streamlined Docker management tool that provides quick access to essential Docker operations through an interactive menu:
 
-  
-
 - View all Docker images, containers, and networks at a glance
 - Pull images from Docker Hub
 - Create and manage containers with port mapping
@@ -41,7 +39,8 @@ A streamlined Docker management tool that provides quick access to essential Doc
 - Container operations (create, remove, shell access)
 - User-friendly interface with color-coded output
 
-2. Net-erx 🌐
+
+#### 2. Net-erx 🌐
 
 A network configuration utility for Linux systems using Netplan:
 
