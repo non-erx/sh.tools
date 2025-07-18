@@ -9,7 +9,7 @@ VM_NAME=""
 RAM_GB=""
 SELECTED_STORAGE=""
 QCOW2_PATH=""
-DISK_SIZE_GB="65" # Default minimum disk size
+DISK_SIZE_GB="65"
 
 log() {
   echo -e "${B}[INFO]${N} $1"
@@ -143,7 +143,6 @@ prepare_metasploitable_image() {
   log "Converting VMDK to qcow2 format..."
   qemu-img convert -O qcow2 Metasploitable2-Linux/Metasploitable.vmdk Metasploitable.qcow2
 
-  # Resize the QCOW2 image to the desired size
   log "Resizing QCOW2 image to ${DISK_SIZE_GB}GB..."
   qemu-img resize Metasploitable.qcow2 "${DISK_SIZE_GB}G"
 
@@ -161,8 +160,6 @@ create_and_configure_vm() {
   qm create "$VM_ID" --name "$VM_NAME" --memory "$ram_mb" --cores 2 --net0 virtio,bridge=vmbr0 --ostype l26
 
   log "Importing disk to storage '$SELECTED_STORAGE'..."
-  # The importdisk command automatically creates the disk of the correct size
-  # if the source qcow2 has been resized.
   qm importdisk "$VM_ID" "$QCOW2_PATH" "$SELECTED_STORAGE"
 
   log "Attaching disk and setting boot order..."
